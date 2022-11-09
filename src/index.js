@@ -4,7 +4,7 @@ import Notiflix from 'notiflix';
 let debounce = require('lodash.debounce');
 const DEBOUNCE_DELAY = 300;
 const inputSearchBox = document.querySelector('#search-box');
-export const listOfCountry = document.querySelector('.country-list');
+export const listOfCountries = document.querySelector('.country-list');
 export const countryInfo = document.querySelector('.country-info');
 
 inputSearchBox.addEventListener(
@@ -14,48 +14,56 @@ inputSearchBox.addEventListener(
 
 function onInputSearchBox() {
   const searchedName = inputSearchBox.value.trim();
-  listOfCountry.innerHTML = '';
+  listOfCountries.innerHTML = '';
   countryInfo.innerHTML = '';
+  if (searchedName.length === 0) {
+    return;
+  }
   fetchCountries(searchedName)
-    .then(country => {
-      console.log(country);
-      const arrOfCountry = country;
-      const searchedCountry = arrOfCountry[0];
-      if (arrOfCountry.status === 404) {
+    .then(countries => {
+      const searchedCountry = countries[0];
+
+      if (countries.status === 404) {
         Notiflix.Notify.failure('Oops, there is no country with that name');
         return;
       }
 
-      if (arrOfCountry.length > 10) {
+      if (countries.length > 10) {
         Notiflix.Notify.info(
           'Too many matches found. Please enter a more specific name.'
         );
         return;
-      } else if (arrOfCountry.length >= 2) {
-        let listOfCountriesHTML = ``;
-        arrOfCountry.map(el => {
-          listOfCountriesHTML += `<li class="country-item"><img src="${el.flags.svg}" alt="${el.name}"><p>${el.name}</p></li>`;
-        });
-        console.log(listOfCountriesHTML);
-        listOfCountry.insertAdjacentHTML('afterbegin', listOfCountriesHTML);
-        return;
-      } else if (arrOfCountry.length === 1) {
-        let itemOfCountry = `<h1 class="country-title"><img src="${
-          searchedCountry.flags.svg
-        }" alt="${searchedCountry.name}">${searchedCountry.name}</h1>
-        <p class="font_style">Capital: <span>${
-          searchedCountry.capital
-        }</span></p>
-        <p class="font_style">Population: <span>${
-          searchedCountry.population
-        }</span></p>
-        <p class="font_style">Languages: <span>${searchedCountry.languages
-          .map(el => {
-            return el.name;
-          })
-          .join(', ')} </span></p>`;
-        countryInfo.insertAdjacentHTML('afterbegin', itemOfCountry);
+      }
+      if (countries.length >= 2) {
+        showListOfCountries(countries);
+      }
+      if (countries.length === 1) {
+        showCountryCard(searchedCountry);
       }
     })
     .catch(err => console.log(err));
+}
+
+function showListOfCountries(countries) {
+  let listOfCountriesHTML = ``;
+  countries.map(country => {
+    listOfCountriesHTML += `<li class="country-item"><img src="${country.flags.svg}" alt="${country.name}"><p>${country.name}</p></li>`;
+  });
+
+  listOfCountries.insertAdjacentHTML('afterbegin', listOfCountriesHTML);
+  return;
+}
+
+function showCountryCard(country) {
+  let countryCard = `<h1 class="country-title"><img src="${
+    country.flags.svg
+  }" alt="${country.name}">${country.name}</h1>
+      <p class="font_style">Capital: <span>${country.capital}</span></p>
+      <p class="font_style">Population: <span>${country.population}</span></p>
+      <p class="font_style">Languages: <span>${country.languages
+        .map(language => {
+          return language.name;
+        })
+        .join(', ')} </span></p>`;
+  countryInfo.insertAdjacentHTML('afterbegin', countryCard);
 }
